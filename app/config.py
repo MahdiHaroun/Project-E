@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     database_password: str
     database_name: str
     database_username: str
+    chatbot_model_token:str
 
 
     class Config:

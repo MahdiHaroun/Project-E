@@ -12,3 +12,14 @@ class image_Captioning(Base):
     image_path = Column(String, nullable=False)
     caption = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+
+
+
+class Chatbot(Base):
+    __tablename__ = "chatbot"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    message = Column(String, nullable=False)
+    response = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+    model_used = Column(String, nullable=False, default="LLaMA-2-7b-chat-hf")

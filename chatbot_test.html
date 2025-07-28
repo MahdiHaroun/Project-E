@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Test Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .chat-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chat-messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #fafafa;
+            border-radius: 5px;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+        }
+        
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .bot-message {
+            background-color: #e9ecef;
+            color: #333;
+            margin-right: auto;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #messageInput {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        #sendButton {
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #sendButton:hover {
+            background-color: #0056b3;
+        }
+        
+        #sendButton:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .api-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .api-info h3 {
+            margin-top: 0;
+            color: #0c5460;
+        }
+        
+        .api-info code {
+            background-color: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 Chatbot Test Interface</h1>
+    
+    <div class="api-info">
+        <h3>API Information</h3>
+        <p><strong>Endpoint:</strong> <code>POST http://localhost:8000/chatbot/</code></p>
+        <p><strong>Model:</strong> facebook/blenderbot-400M-distill</p>
+        <p>This interface sends messages to your FastAPI chatbot endpoint and displays the responses.</p>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div>Hello! I'm your AI chatbot. How can I help you today?</div>
+                <div class="timestamp">System message</div>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Type your message here..." 
+                onkeypress="handleKeyPress(event)"
+            >
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        
+        // API base URL - change this if your server runs on a different port
+        const API_BASE_URL = 'http://localhost:8000';
+        
+        function addMessage(content, isUser = false, timestamp = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.textContent = content;
+            messageDiv.appendChild(contentDiv);
+            
+            if (timestamp) {
+                const timestampDiv = document.createElement('div');
+                timestampDiv.className = 'timestamp';
+                timestampDiv.textContent = new Date(timestamp).toLocaleString();
+                messageDiv.appendChild(timestampDiv);
+            }
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function addErrorMessage(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = `Error: ${message}`;
+            chatMessages.appendChild(errorDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot-message loading';
+            loadingDiv.id = 'loading-message';
+            loadingDiv.textContent = 'Bot is typing...';
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function hideLoading() {
+            const loadingMessage = document.getElementById('loading-message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+        
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, true);
+            
+            // Clear input and disable button
+            messageInput.value = '';
+            sendButton.disabled = true;
+            messageInput.disabled = true;
+            
+            // Show loading indicator
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chatbot/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+                
+                hideLoading();
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Add bot response to chat
+                addMessage(data.response, false, data.created_at);
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                
+                if (error.name === 'TypeError' && error.message.includes('fetch')) {
+                    addErrorMessage('Cannot connect to the server. Make sure your FastAPI server is running on http://localhost:8000');
+                } else {
+                    addErrorMessage(error.message);
+                }
+            } finally {
+                // Re-enable input and button
+                sendButton.disabled = false;
+                messageInput.disabled = false;
+                messageInput.focus();
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !sendButton.disabled) {
+                sendMessage();
+            }
+        }
+        
+        // Focus on input when page loads
+        window.onload = function() {
+            messageInput.focus();
+        };
+        
+        // Test connection on page load
+        async function testConnection() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Server connection successful:', data);
+                }
+            } catch (error) {
+                console.log('Server not accessible:', error.message);
+                addErrorMessage('Server not accessible. Please make sure your FastAPI server is running.');
+            }
+        }
+        
+        // Test connection after a short delay
+        setTimeout(testConnection, 1000);
+    </script>
+</body>
+</html>
