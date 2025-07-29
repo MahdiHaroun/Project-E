@@ -35,3 +35,20 @@ class ChatbotRequest(BaseModel):
     class Config:
         from_attributes = True
         protected_namespaces = ()
+
+
+class SummarizationRequest(BaseModel):
+    voice_path: str 
+
+
+
+class SummarizationResponse(BaseModel):
+    id: int
+    voice_path: str
+    encoded_text: str
+    summary: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+        protected_namespaces = ()
