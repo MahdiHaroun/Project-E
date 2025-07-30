@@ -34,3 +34,14 @@ class Summarization(Base):
     encoded_text = Column(String, nullable=False)
     summary = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+
+
+class PDFChatbot(Base):
+    __tablename__ = "pdf_chatbot"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    pdf_path = Column(String, nullable=False)
+    question = Column(String, nullable=False)
+    answer = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'), nullable=False)
+    

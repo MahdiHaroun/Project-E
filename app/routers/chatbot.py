@@ -48,8 +48,7 @@ class ChatbotModel_LLAMA:
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         model_name = "meta-llama/Llama-2-7b-chat-hf"
-        access_token = settings.chatbot_model_token  # For production, load this from .env
-
+        access_token = settings.chatbot_model_token  
         print("Loading chatbot model... (this happens only once)")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, token=access_token)
         self.model = AutoModelForCausalLM.from_pretrained(model_name, token=access_token)

@@ -52,3 +52,25 @@ class SummarizationResponse(BaseModel):
     class Config:
         from_attributes = True
         protected_namespaces = ()
+
+
+
+
+
+class PDFPathRequest(BaseModel):
+    pdf_path: str
+
+class QuestionRequest(BaseModel):
+    question: str
+
+class QAResponse(BaseModel):
+    id: int
+    pdf_path: str
+    question: str
+    answer: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
